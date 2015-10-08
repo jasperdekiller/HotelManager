@@ -1,0 +1,381 @@
+-- Table --
+
+TextBoxes = {}
+local sText = ""
+local Hide = nil
+local currentTextBox = nil
+
+
+-- Functions --
+
+function clearAll()
+ TextBoxes = {}
+end
+
+function enableTextBox(textBox)
+ for k,v in pairs(TextBoxes) do
+  if v["textBoxName"] == textBox then
+   TextBoxes[k]["Enabled"] = true
+   return true
+  end
+ end
+  return false
+end
+
+function getKey(textBox)
+ for k,v in pairs(TextBoxes) do
+  if v["textBoxName"] == textBox then
+   return k
+  end
+ end
+  return false
+end
+
+function getName(key)
+ for k,v in pairs(TextBoxes) do
+  if k == key then
+   return v["textBoxName"]
+  end
+ end
+  return false
+end
+
+function redrawTextbox(textBox)
+ if checkExists(textBox) then
+  cKey = getKey(textBox)
+
+  term.setBackgroundColor(TextBoxes[cKey]["bgColor"])
+  term.setTextColor(TextBoxes[cKey]["txtColor"])
+  for i = TextBoxes[cKey]["yPos"],TextBoxes[cKey]["yPos"]+TextBoxes[cKey]["height"]-1 do
+   term.setCursorPos(TextBoxes[cKey]["xPosStart"],i)
+   term.write(string.rep(" ", TextBoxes[cKey]["width"]))
+  end
+
+  if TextBoxes[tonumber(cKey)]["txt"] then
+   text = TextBoxes[tonumber(cKey)]["txt"]
+   term.setCursorPos(TextBoxes[cKey]["xPosStart"]+1,TextBoxes[cKey]["yPos"])
+   term.write(tostring(text))
+  end   
+ end
+end
+
+function saveCurrentTextBox(answer)
+ cKey = getKey(currentTextBox)
+ if cKey then
+  TextBoxes[tonumber(cKey)]["txt"] = sText
+ end
+  if answer == "yes" then
+   currentTextBox = nil
+  end
+end
+
+function getVariable(textBox)
+ if checkExists(textBox) then
+  return TextBoxes[tonumber(getKey(textBox))]["txt"]
+ end
+  return ""
+end
+
+function disableTextBox(textBox)
+ for k,v in pairs(TextBoxes) do
+  if v["textBoxName"] == tostring(textBox) then
+   TextBoxes[k]["Enabled"] = false
+   return true
+  end
+ end
+  return false
+end
+
+function checkExists(textBox)
+ for k,v in pairs(TextBoxes) do
+  if v["textBoxName"] == textBox then
+   return true
+  end
+ end
+  return false
+end
+
+function checkDisabled(textBox)
+ for k,v in pairs(TextBoxes) do
+  if v["textBoxName"] == textBox then
+   return TextBoxes[k]["Enabled"]
+  end
+ end
+  return false
+end
+
+function edit(textBox, txt)
+ if checkExists(textBox) then
+  cKey = getKey(textBox)
+   if txt then
+    TextBoxes[cKey]["txt"] = tostring(txt)
+   end
+    if TextBoxes[cKey]["txt"]:len() > 0 then
+     editTextBox(TextBoxes[cKey]["nextTextBox"],TextBoxes[cKey]["Hided"],
+                TextBoxes[cKey]["width"],tonumber(cKey),TextBoxes[cKey]["xPosStart"],
+                TextBoxes[cKey]["yPos"],TextBoxes[cKey]["yPosStop"]+1,TextBoxes[cKey]["bgColor"],TextBoxes[cKey]["txtColor"],TextBoxes[cKey]["txt"])
+    else
+     editTextBox(TextBoxes[cKey]["nextTextBox"],TextBoxes[cKey]["Hided"],
+                TextBoxes[cKey]["width"],tonumber(cKey),TextBoxes[cKey]["xPosStart"],
+                TextBoxes[cKey]["yPos"],TextBoxes[cKey]["yPosStop"]+1,TextBoxes[cKey]["bgColor"],TextBoxes[cKey]["txtColor"])
+    end
+ end
+end
+
+function removeTextBox(textBox)
+ local found = nil
+ for k,v in pairs(TextBoxes) do
+  if v["textBoxName"] == textBox then
+   found = k
+  end
+ end
+  if found then
+   table.remove(TextBoxes, found)
+   return true
+  else
+   return false
+  end
+end
+
+function editTextBox(nextTextBox,Hide,width,key,X,Y,endX,bgColor,txtColor,txt)
+currentTextBox = getName(key)
+term.setBackgroundColor(bgColor)
+term.setTextColor(txtColor)
+
+local X = X + 1
+
+if nextTextBox then
+ nextTextBox = nextTextBox
+else
+ nextTextBox = nil
+end
+
+local nPos = 0
+local nX = X
+local Text = nil
+
+if tostring(Hide) == "true" then
+   _sReplaceChar = "*"
+    _sReplaceChar = string.sub( _sReplaceChar, 1, 1 )
+else
+  _sReplaceChar = nil
+end
+
+maxLength = width -1
+
+if txt and txt:len() > 0 then
+ sText = txt
+ nPos = txt:len()
+ nX = X+nPos
+else
+ sText = ""
+end
+
+term.setCursorPos(nX,Y)
+term.setCursorBlink( true )
+local w = term.getSize()
+local sx = term.getCursorPos()
+local function redraw( _sCustomReplaceChar )
+  local nScroll = 0
+
+  if sx + nPos >= w then
+      nScroll = (sx + nPos) - w
+  end
+
+  local cx,cy = term.getCursorPos()
+  term.setCursorPos( X, cy )
+  local sReplace = _sCustomReplaceChar or _sReplaceChar
+  if sReplace then
+      write( string.rep( sReplace, math.max( string.len(sText) - nScroll, 0 ) ) )
+  else
+      write( string.sub( sText, nScroll + 1 ) )
+  end
+  term.setCursorPos( X + nPos - nScroll, cy )
+end
+
+while true do
+      local sEvent, param, param2, param3 = os.pullEvent()
+        if sEvent == "char" then
+          if sText:len() <= width-2 then
+            sText = string.sub( sText, 1, nPos ) .. param .. string.sub( sText, (param:len() + nPos) )
+            nPos = nPos + 1
+            redraw()
+          end
+        elseif sEvent == "paste" then
+          tstText = string.sub( sText, 1, nPos ) .. param .. string.sub( sText, nPos + 1 )
+          if tstText:len() < maxLength then
+           sText = string.sub( sText, 1, nPos ) .. param .. string.sub( sText, nPos + 1 )
+           nPos = nPos + string.len( param )
+           redraw()
+          end
+        elseif sEvent == "key" then
+            if param == keys.enter then
+                break   
+            elseif param == keys.tab then
+             if nextTextBox and getKey(nextTextBox) then
+              if TextBoxes[getKey(nextTextBox)]["txt"]:len() > 0 then
+               saveCurrentTextBox()
+               editTextBox(TextBoxes[getKey(nextTextBox)]["nextTextBox"],  
+                           TextBoxes[getKey(nextTextBox)]["Hided"], 
+                           TextBoxes[getKey(nextTextBox)]["width"], 
+                           getKey(nextTextBox),                          
+                           TextBoxes[getKey(nextTextBox)]["xPosStart"], 
+                           TextBoxes[getKey(nextTextBox)]["yPos"], TextBoxes[getKey(nextTextBox)]["yPosStop"]+1,
+                           TextBoxes[getKey(nextTextBox)]["bgColor"], TextBoxes[getKey(nextTextBox)]["txtColor"],
+                           TextBoxes[getKey(nextTextBox)]["txt"])
+              else
+               saveCurrentTextBox()
+               editTextBox(TextBoxes[getKey(nextTextBox)]["nextTextBox"],  
+                           TextBoxes[getKey(nextTextBox)]["Hided"], 
+                           TextBoxes[getKey(nextTextBox)]["width"], 
+                           getKey(nextTextBox),                          
+                           TextBoxes[getKey(nextTextBox)]["xPosStart"], 
+                           TextBoxes[getKey(nextTextBox)]["yPos"], TextBoxes[getKey(nextTextBox)]["yPosStop"]+1,
+                           TextBoxes[getKey(nextTextBox)]["bgColor"], TextBoxes[getKey(nextTextBox)]["txtColor"])
+              end
+               break         
+             end
+            elseif param == keys.left then
+                if nPos > 0 then
+                    nPos = nPos - 1
+                    redraw()
+                end
+            elseif param == keys.right then             
+                if nPos < string.len(sText) then
+                    redraw(" ")
+                    nPos = nPos + 1
+                    redraw()
+                end
+            elseif param == keys.up or param == keys.down then
+                if _tHistory then
+                    redraw(" ")
+                    if param == keys.up then
+                        if nHistoryPos == nil then
+                            if #_tHistory > 0 then
+                                nHistoryPos = #_tHistory
+                            end
+                        elseif nHistoryPos > 1 then
+                            nHistoryPos = nHistoryPos - 1
+                        end
+                    else
+                        if nHistoryPos == #_tHistory then
+                            nHistoryPos = nil
+                        elseif nHistoryPos ~= nil then
+                            nHistoryPos = nHistoryPos + 1
+                        end                        
+                    end
+                    if nHistoryPos then
+                        sText = _tHistory[nHistoryPos]
+                        nPos = string.len( sText )
+                    else
+                        sText = ""
+                        nPos = 0
+                    end
+                    redraw()
+                end
+            elseif param == keys.backspace then
+                if nPos > 0 then
+                    redraw(" ")
+                    sText = string.sub( sText, 1, nPos - 1 ) .. string.sub( sText, nPos + 1 )
+                    nPos = nPos - 1                    
+                    redraw()
+                end
+            elseif param == keys.home then
+                redraw(" ")
+                nPos = 0
+                redraw()        
+            elseif param == keys.delete then
+                if nPos < string.len(sText) then
+                    redraw(" ")
+                    sText = string.sub( sText, 1, nPos ) .. string.sub( sText, nPos + 2 )                
+                    redraw()
+                end
+            elseif param == keys["end"] then
+                redraw(" ")
+                nPos = string.len(sText)
+                redraw()
+            end
+         elseif sEvent == "term_resize" then
+            w = term.getSize()
+            redraw()
+        elseif sEvent == "mouse_click" then
+          local scroll = 0
+               if maxLength and nPos > maxLength then
+                scroll = nPos - maxLength
+               end
+              if param2 >= X and param2 <= X+width-2 and param3 == Y and param2 <= (sText:len() + X) then
+                nPos = param2 - X - scroll
+                redraw()
+              elseif param2 >= X and param2 <= X+width-2 and param3 == Y then
+                nPos = sText:len()
+                redraw()
+              elseif param2 >= X-1 and param2 <= X+width-2 and param3 == Y then
+              else
+              for k,v in pairs(TextBoxes) do
+                  if param2 >= v["xPosStart"] and param2 <= v["xPosStop"] and param3 >= v["yPos"] and param3 <= v["yPosStop"] and v["Enabled"] == true then
+                    saveCurrentTextBox("yes")
+                    currentTextBox = v["textBoxName"]
+                    term.setCursorBlink( false )                        
+                   if v["txt"]:len() > 0 then
+                    editTextBox(v["nextTextBox"], v["Hided"], v["width"], k, v["xPosStart"], v["yPos"], v["yPosStop"]+1, v["bgColor"], v["txtColor"], v["txt"])
+                   else
+                    editTextBox(v["nextTextBox"], v["Hided"], v["width"], k, v["xPosStart"], v["yPos"], v["yPosStop"]+1, v["bgColor"], v["txtColor"])
+                   end
+                  end
+                 end  
+                   saveCurrentTextBox("yes")
+                  term.setCursorBlink( false )
+                return sText                              
+              end                        
+        end
+    end
+    saveCurrentTextBox("yes")
+    term.setCursorBlink( false )
+  return sText
+end
+
+function newTextBox(nextTextBox, hided, xPos, yPos, txtColor, bgColor, width, height, textBoxName, txt)
+ if checkExists(textBoxName) ~= true then
+  term.setBackgroundColor(bgColor)
+  term.setTextColor(txtColor)
+  if not textBoxName then
+   textBoxName = "textBoxName-"..tostring(#TextBoxes+1)
+  end
+   for i = yPos,yPos+height-1 do
+     term.setCursorPos(xPos,i)
+     term.write(string.rep(" ", width))
+   end
+  if txt and txt:len() > 0 then
+   text = txt
+   term.setCursorPos(xPos+1,yPos)
+   term.write(tostring(text))
+  else
+   text = ""
+  end   
+    TextBoxes[#TextBoxes+1] =
+    {["bgColor"] = bgColor, ["txtColor"] = txtColor, ["width"] = width,
+     ["height"] = height, ["textBoxName"] = textBoxName, ["txt"] = tostring(text),
+     ["xPosStart"] = xPos, ["xPosStop"] = xPos+width-1, ["yPos"] = yPos,
+     ["yPosStop"] = yPos+height-1, ["Enabled"] = true, ["Hided"] = tostring(hided),
+     ["nextTextBox"] = nextTextBox}
+    end
+end
+
+function handleTextBoxes()
+ while true do
+  event, button, xPos, yPos = os.pullEvent("mouse_click")
+  if event == "mouse_click" then
+   for k,v in pairs(TextBoxes) do
+    if xPos >= v["xPosStart"] and xPos <= v["xPosStop"] and yPos >= v["yPos"] and yPos <= v["yPosStop"] and v["Enabled"] == true and currentTextBox == nil then
+      currentTextBox = v["textBoxName"]
+     if v["txt"]:len() > 0 then
+      editTextBox(v["nextTextBox"], v["Hided"], v["width"], k, v["xPosStart"], v["yPos"], v["yPosStop"]+1, v["bgColor"], v["txtColor"], v["txt"])
+     else
+      editTextBox(v["nextTextBox"], v["Hided"], v["width"], k, v["xPosStart"], v["yPos"], v["yPosStop"]+1, v["bgColor"], v["txtColor"])
+     end
+    end
+   end
+  end
+ end
+end
+
