@@ -1,0 +1,105 @@
+local Buttons = {}
+
+function clearAll()
+ Buttons = {}
+end
+
+function removeButton(buttonName)
+ local found = nil
+ for k,v in pairs(Buttons) do
+  if v["buttonName"] == buttonName then
+   found = k
+  end
+ end
+  if found then
+   table.remove(Buttons, found)
+   return true
+  else
+   return false
+  end
+end
+
+function checkDisabled(buttonName)
+ for k,v in pairs(Buttons) do
+  if v["buttonName"] == buttonName then
+   return Buttons[k]["Enabled"]
+  end
+ end
+  return false
+end
+
+function enableButton(buttonName)
+ for k,v in pairs(Buttons) do
+  if v["buttonName"] == buttonName then
+   Buttons[k]["Enabled"] = true
+   return true
+  end
+ end
+  return false
+end
+
+function disableButton(buttonName)
+ for k,v in pairs(Buttons) do
+  if v["buttonName"] == buttonName then
+   Buttons[k]["Enabled"] = false
+   return true
+  end
+ end
+  return false
+end
+
+
+function redrawButtons()
+ for k,v in pairs(Buttons) do
+   if v["Enabled"] == true then
+    term.setBackgroundColor(v["bgColor"])
+    term.setTextColor(v["txtColor"])
+    txt = v["txt"]
+    local X = v["xPosStart"] + math.floor( v["Width"] / 2 - #txt / 2 )
+    local Y = v["yPos"] + math.floor( v["height"] / 2 )
+   for i = v["yPos"],v["yPos"]+v["height"]-1 do
+     term.setCursorPos(v["xPosStart"],i)
+     term.write(string.rep(" ", v["Width"]))
+   end
+    term.setCursorPos(X,Y)
+    term.write(txt)
+   end
+  end
+end
+ 
+ 
+function newButton(xPos,yPos,bgColor,txtColor,width,height,txt,buttonName)
+  term.setBackgroundColor(bgColor)
+  term.setTextColor(txtColor)
+  local X = xPos + math.floor( width / 2 - #txt / 2 )
+  local Y = yPos + math.floor( height / 2 )
+  if not buttonName then
+   buttonName = "Button-"..tostring(#Buttons+1)
+  end
+   for i = yPos,yPos+height-1 do
+     term.setCursorPos(xPos,i)
+     term.write(string.rep(" ", width))
+   end
+    term.setCursorPos(X,Y)
+    term.write(txt)
+    Buttons[#Buttons+1] =
+    {["bgColor"] = bgColor, ["txtColor"] = txtColor, ["Width"] = width,
+     ["height"] = height, ["buttonName"] = buttonName, ["txt"] = txt,
+     ["xPosStart"] = xPos, ["xPosStop"] = xPos+width-1, ["yPos"] = yPos,["yPosStop"] = yPos+height-1, ["Enabled"] = true}
+end
+
+function handleClicks()
+ while true do
+  event, button, xPos, yPos = os.pullEvent("mouse_click")
+  if event == "mouse_click" then
+   for k,v in pairs(Buttons) do
+    if xPos >= v["xPosStart"] and xPos <= v["xPosStop"] and yPos >= v["yPos"] and yPos <= v["yPosStop"] and v["Enabled"] == true then
+      return v["buttonName"]
+    end
+   end
+  end
+ end
+end
+
+
+
