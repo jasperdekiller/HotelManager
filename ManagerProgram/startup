@@ -1,0 +1,943 @@
+-- Variables
+local version = 0.1
+local currentPage = nil
+local currentUsername = nil
+local currentPassword = nil
+local currentRank = nil
+local rednetModem = "top"
+local receiverID = 2
+
+-- New User Variables
+local usern = nil
+local passw = nil
+local userdays = 0
+local currentOffset = 1
+local userroom = 0
+
+local cTable = {}
+local cUsername = ""
+
+function loadAPI(api)
+	if fs.exists("APIS/"..api) then
+		os.loadAPI("APIS/"..api)
+	end
+end
+
+function checkFirstTime()
+	if fs.exists(".dbConnected") then
+		return true
+	else
+		return false
+	end				
+end
+
+function clearAll()
+	buttonAPI.clearAll()
+	textBoxAPI.clearAll()
+end
+
+-- Clear all details
+function clearDetails()
+	currentUsername = nil
+	currentRank = nil
+	currentPassword = nil
+end
+
+function clearUser()
+	currentUsername = nil
+	currentRank = nil
+	currentPassword = nil
+	usern = nil
+	passw = nil
+	userdays = 0
+	userroom = 0	
+end	
+
+-- Check APIS
+if not fs.exists("APIS/DatabaseAPI") then
+	error("HotelManager need some APIS to run")
+end
+
+-- Load APIS
+loadAPI("shaAPI")
+loadAPI("printAPI")
+loadAPI("buttonAPI")
+loadAPI("textBoxAPI")
+loadAPI("databaseAPI")
+
+-- Check advanced
+if not term.isColor() then
+	error("HotelManager need a (gold) Advanced Computer.")
+end
+
+-- Check http enabled
+if not http then
+	error("HotelManager need http enabled.")
+end
+
+-- Check if pocket
+if pocket then
+	error("HotelManager is not supported on a Pocket Computer.")
+end
+
+-- Check for TextBoxes
+function checkForTextBoxes()
+ textBoxAPI.handleTextBoxes() 
+end
+
+function drawExpiredUsers()
+	currentPage = "ExpiredUsers"
+	clearAll()
+	printAPI.clearScreen(colors.white)
+	printAPI.printHeader(colors.gray,3)
+	printAPI.printLogo(2,2, "Expired Users")
+	printAPI.bgColor(colors.white)
+	buttonAPI.newButton(46,2,colors.gray,colors.white,4,1,"Back","zz_button")
+	term.setCursorPos(1,4)
+	term.setBackgroundColor(colors.lightGray)
+	term.clearLine()
+	printAPI.indented("Username", 2, 4, colors.white, colors.lightGray)
+	printAPI.indented("Room", 17, 4, colors.white, colors.lightGray)
+	printAPI.indented("Access", 26, 4, colors.white, colors.lightGray)
+	printAPI.indented("Power", 37, 4, colors.white, colors.lightGray)
+
+	term.setTextColor(colors.lightGray)
+	term.setBackgroundColor(colors.white)
+	printAPI.centered("Loading users..", 5)
+
+	table = databaseAPI.getExpireUsers()
+if #table > 0 then	
+	newT = {}
+	clearAll()
+	printAPI.clearScreen(colors.white)
+	printAPI.printHeader(colors.gray,3)
+	printAPI.printLogo(2,2, #table .. " result(s)")
+	printAPI.bgColor(colors.white)
+	buttonAPI.newButton(46,2,colors.gray,colors.white,4,1,"Back","zz_button")
+	term.setCursorPos(1,4)
+	term.setBackgroundColor(colors.lightGray)
+	term.clearLine()
+	printAPI.indented("Username", 2, 4, colors.white, colors.lightGray)
+	printAPI.indented("Room", 17, 4, colors.white, colors.lightGray)
+	printAPI.indented("Access", 26, 4, colors.white, colors.lightGray)
+	printAPI.indented("Power", 37, 4, colors.white, colors.lightGray)	
+
+	if #table > 0 then
+		o = 5
+
+		for k,v in pairs(table) do
+		term.setTextColor(colors.lightGray)
+		term.setBackgroundColor(colors.white)
+		printAPI.centered("Fetching details..", o)
+		room = databaseAPI.getID(v)
+		access = databaseAPI.getAccessByUsername(v)
+		power = databaseAPI.getPowerByUsername(v)
+		newT[#newT + 1] = {["username"] = v, ["room"] = room, ["access"] = access, ["power"] = power}
+		if tostring(access) == "1" then
+			access = "Allowed"
+		else
+			access = "Denied"
+		end
+
+		if tostring(power) == "1" then
+			power = "Allowed"
+		else
+			power = "Denied"
+		end
+
+		if tostring(room) == "0" then
+			room = "None"
+		end		
+
+		term.setCursorPos(2,o)
+		term.setBackgroundColor(colors.yellow)
+		term.clearLine()
+		printAPI.indented(v, 2, o, colors.black, colors.yellow)
+		printAPI.indented(room, 17, o, colors.black, colors.yellow)
+		printAPI.indented(access, 26, o, colors.black, colors.yellow)
+		printAPI.indented(power, 37, o, colors.black, colors.yellow)
+		o = o + 1
+	end
+
+	bTable = newT
+
+	if ( o - 5 ) > 15 then -- If more than 15 users
+		for i = 1,15 do
+			n = i + 4
+			term.setCursorPos(51, n)
+			term.setBackgroundColor(colors.lightGray)
+			term.setTextColor(colors.white)
+			if i == 15 then
+				term.write("v")
+			else
+				term.write(" ")
+			end
+			i = i + 1
+		end
+	end
+
+
+
+
+	function drawLayout(currentOffset, o)
+		currentPage = "searchUser2"
+		printAPI.clearScreen(colors.white)
+		printAPI.printHeader(colors.gray,3)
+		printAPI.printLogo(2,2, #bTable .. " result(s)")
+		printAPI.bgColor(colors.white)
+		buttonAPI.newButton(46,2,colors.gray,colors.white,4,1,"Back","b_button")
+		term.setCursorPos(1,4)
+		term.setBackgroundColor(colors.lightGray)
+		term.clearLine()
+		printAPI.indented("Username", 2, 4, colors.white, colors.lightGray)
+		printAPI.indented("Room", 17, 4, colors.white, colors.lightGray)
+		printAPI.indented("Access", 26, 4, colors.white, colors.lightGray)
+		printAPI.indented("Power", 37, 4, colors.white, colors.lightGray)
+		
+		o = 5
+		kp = currentOffset
+		for k,v in pairs(bTable) do
+			if k > kp then
+				username = newT[k]["username"]
+				room = newT[k]["room"]
+				access = newT[k]["access"]
+				power = newT[k]["power"]
+				if tostring(access) == "1" then
+					access = "Allowed"
+				else
+					access = "Denied"
+				end
+
+				if tostring(power) == "1" then
+					power = "Allowed"
+				else
+					power = "Denied"
+				end
+
+				if tostring(room) == "0" then
+					room = "None"
+				end				
+
+				term.setCursorPos(2,o)
+				term.setBackgroundColor(colors.yellow)
+				term.clearLine()
+				printAPI.indented(username, 2, o, colors.black, colors.yellow)
+				printAPI.indented(room, 17, o, colors.black, colors.yellow)
+				printAPI.indented(access, 26, o, colors.black, colors.yellow)
+				printAPI.indented(power, 37, o, colors.black, colors.yellow)
+				o = o + 1
+			end
+		end
+
+
+		if ( o - 5 ) > 15 then -- If more than 15 users
+			for i = 1,15 do
+				n = i + 4
+				term.setCursorPos(51, n)
+				term.setBackgroundColor(colors.lightGray)
+				term.setTextColor(colors.white)
+				if i == 15 then
+					term.write("v")
+				else
+					term.write(" ")
+				end
+				i = i + 1
+			end
+				if currentOffset == 0 then
+					printAPI.indented(" ", 51, 5, colors.white, colors.lightGray)
+				else
+					printAPI.indented("^", 51, 5, colors.white, colors.lightGray)
+				end
+		end
+
+	end
+
+	p = 0
+
+	while true do
+		local event, button, x, y = os.pullEvent( "mouse_click" )
+		if event == "mouse_click" and button == 1 then
+			if x >= 46 and x <= 50 and y == 2 then
+				drawMain() 
+			elseif x >= 51 and x <= 51 and y == 5 then -- bovenste pijltje		
+				if p > 0 then
+					-- Go up
+					p = p - 1
+					drawLayout(p, o)
+					if p == 0 then
+						printAPI.indented(" ", 51, 5, colors.white, colors.lightGray)
+					end
+					if (o - 5) > (15 + p) then 
+						printAPI.indented("v", 51, 19, colors.white, colors.lightGray)
+					end		
+				end
+			elseif x >= 51 and x <= 51 and y == 19 then -- onderste pijltje		
+				if o > 15 and (o - 5) ~= (15 + p) then 
+					p = p + 1
+					drawLayout(p, o)
+					printAPI.indented("^", 51, 5, colors.white, colors.lightGray) -- check
+					if (o - 5) <= (15 + p) then -- if 16 == 16 then               -- check 22 - 4 = 18 ~= 15 + 2 = 17
+						printAPI.indented(" ", 51, 19, colors.white, colors.lightGray)
+					end
+				end
+			elseif x >= 1 and x <= 50 and y > 4 then
+				key = ( y - 4 ) + p
+				user = table[key] 
+				if user ~= nil then
+					drawEditSearchUser(table, user)
+					cUsername = user
+				end
+			end
+		end
+	end
+  end
+
+else
+	term.setCursorPos(1,5)
+	term.clearLine()
+	term.setTextColor(colors.lightGray)
+	term.setBackgroundColor(colors.white)
+	printAPI.centered("No results", 5)
+	buttonAPI.newButton(46,2,colors.gray,colors.white,4,1,"Back","Main_button")
+	checkForButtons()
+end
+
+end
+
+function drawSearchUser()
+	currentPage = "searchUser"
+	clearAll()
+	printAPI.clearScreen(colors.white)
+	printAPI.printHeader(colors.gray,3)
+	printAPI.printLogo(2,2, "Search User")
+	printAPI.bgColor(colors.white)
+	buttonAPI.newButton(46,2,colors.gray,colors.white,4,1,"Back","Main_button")
+	buttonAPI.newButton(13,12,colors.lightGray,colors.white,25,3,"Search","Search")
+	printAPI.indented("Username / Room:", 14, 7, colors.gray, colors.white)   
+	textBoxAPI.newTextBox(nil, false, 14, 8, colors.white, colors.lightGray, 23, 1, "UserRoomSearch")
+	parallel.waitForAll(checkForTextBoxes, checkForButtons, function() textBoxAPI.edit("UserRoomSearch") end)
+end
+
+function drawEditSearchUser(tbl, username)
+	tb = {}
+	tb = tbl
+	clearAll()
+	currentPage = "searchEditUser"
+	cUsername = username
+	printAPI.clearScreen(colors.white)
+	printAPI.printHeader(colors.gray,3)
+	printAPI.printLogo(2,2, "Edit " .. username)
+	printAPI.bgColor(colors.white)
+	buttonAPI.newButton(46,2,colors.gray,colors.white,4,1,"Back","b1_button")	
+
+	room = databaseAPI.getID(username)
+	access = databaseAPI.getAccessByUsername(username)
+	power = databaseAPI.getPowerByUsername(username)
+
+	caccess = ""
+	cpower = ""
+
+	if tostring(access) == "1" then
+		caccess = "Allowed"
+	else
+		caccess = "Denied"
+	end
+
+	if tostring(power) == "1" then
+		cpower = "Allowed"
+	else
+		cpower = "Denied"
+	end	
+
+	if tostring(room) == "0" then
+		room = "None"
+	end	
+
+	printAPI.indented("Information", 2, 5, colors.gray, colors.white)
+	printAPI.indented("Username:                      " .. username, 4, 6, colors.lightGray, colors.white)
+	printAPI.indented("Room:                          " .. room, 4, 7, colors.lightGray, colors.white)
+	printAPI.indented("Access Status:                 " .. caccess, 4, 8, colors.lightGray, colors.white)
+	printAPI.indented("Power Status:                  " .. cpower, 4, 9, colors.lightGray, colors.white)
+	printAPI.indented("Settings", 2, 11, colors.gray, colors.white)
+
+	if tostring(access) == "1" then
+		buttonAPI.newButton(4,13,colors.green,colors.white,16,1,"Change Access","change_access_button")
+	else
+		buttonAPI.newButton(4,13,colors.red,colors.white,16,1,"Change Access","change_access_button")
+	end
+
+	if tostring(power) == "1" then
+		buttonAPI.newButton(4,15,colors.green,colors.white,16,1,"Change Power","change_power_button")
+	else
+		buttonAPI.newButton(4,15,colors.red,colors.white,16,1,"Change Power","change_power_button")
+	end
+
+	buttonAPI.newButton(29,13,colors.lightGray,colors.white,16,1,"Remove Room","remove_room_button")	
+	buttonAPI.newButton(29,15,colors.lightGray,colors.white,16,1,"Remove Account","remove_account_button")
+
+	checkForButtons()
+end
+
+function drawSearchUser2(tbl)
+	clearAll()
+	cTable = {}
+	cTable = tbl
+	newT = {}
+
+	currentPage = "searchUser2"
+	printAPI.clearScreen(colors.white)
+	printAPI.printHeader(colors.gray,3)
+	printAPI.printLogo(2,2, #cTable .. " result(s)")
+	printAPI.bgColor(colors.white)
+	buttonAPI.newButton(46,2,colors.gray,colors.white,4,1,"Back","b_button")
+	term.setCursorPos(1,4)
+	term.setBackgroundColor(colors.lightGray)
+	term.clearLine()
+	printAPI.indented("Username", 2, 4, colors.white, colors.lightGray)
+	printAPI.indented("Room", 17, 4, colors.white, colors.lightGray)
+	printAPI.indented("Access", 26, 4, colors.white, colors.lightGray)
+	printAPI.indented("Power", 37, 4, colors.white, colors.lightGray)
+	
+	o = 5
+	for k,v in pairs(cTable) do
+		term.setTextColor(colors.lightGray)
+		term.setBackgroundColor(colors.white)
+		printAPI.centered("Fetching details..", o)
+		room = databaseAPI.getID(v)
+		access = databaseAPI.getAccessByUsername(v)
+		power = databaseAPI.getPowerByUsername(v)
+		newT[#newT + 1] = {["username"] = v, ["room"] = room, ["access"] = access, ["power"] = power}
+		if tostring(access) == "1" then
+			access = "Allowed"
+		else
+			access = "Denied"
+		end
+
+		if tostring(power) == "1" then
+			power = "Allowed"
+		else
+			power = "Denied"
+		end
+
+		if tostring(room) == "0" then
+			room = "None"
+		end		
+
+		term.setCursorPos(2,o)
+		term.setBackgroundColor(colors.yellow)
+		term.clearLine()
+		printAPI.indented(v, 2, o, colors.black, colors.yellow)
+		printAPI.indented(room, 17, o, colors.black, colors.yellow)
+		printAPI.indented(access, 26, o, colors.black, colors.yellow)
+		printAPI.indented(power, 37, o, colors.black, colors.yellow)
+		o = o + 1
+	end
+
+
+	if ( o - 5 ) > 15 then -- If more than 15 users
+		for i = 1,15 do
+			n = i + 4
+			term.setCursorPos(51, n)
+			term.setBackgroundColor(colors.lightGray)
+			term.setTextColor(colors.white)
+			if i == 15 then
+				term.write("v")
+			else
+				term.write(" ")
+			end
+			i = i + 1
+		end
+	end
+
+
+
+
+	function drawLayout(currentOffset, o)
+		currentPage = "searchUser2"
+		printAPI.clearScreen(colors.white)
+		printAPI.printHeader(colors.gray,3)
+		printAPI.printLogo(2,2, #cTable .. " result(s)")
+		printAPI.bgColor(colors.white)
+		buttonAPI.newButton(46,2,colors.gray,colors.white,4,1,"Back","b_button")
+		term.setCursorPos(1,4)
+		term.setBackgroundColor(colors.lightGray)
+		term.clearLine()
+		printAPI.indented("Username", 2, 4, colors.white, colors.lightGray)
+		printAPI.indented("Room", 17, 4, colors.white, colors.lightGray)
+		printAPI.indented("Access", 26, 4, colors.white, colors.lightGray)
+		printAPI.indented("Power", 37, 4, colors.white, colors.lightGray)
+		
+		o = 5
+		kp = currentOffset
+		for k,v in pairs(cTable) do
+			if k > kp then
+				username = newT[k]["username"]
+				room = newT[k]["room"]
+				access = newT[k]["access"]
+				power = newT[k]["power"]
+				if tostring(access) == "1" then
+					access = "Allowed"
+				else
+					access = "Denied"
+				end
+
+				if tostring(power) == "1" then
+					power = "Allowed"
+				else
+					power = "Denied"
+				end
+
+				if tostring(room) == "0" then
+					room = "None"
+				end
+
+				term.setCursorPos(2,o)
+				term.setBackgroundColor(colors.yellow)
+				term.clearLine()
+				printAPI.indented(username, 2, o, colors.black, colors.yellow)
+				printAPI.indented(room, 17, o, colors.black, colors.yellow)
+				printAPI.indented(access, 26, o, colors.black, colors.yellow)
+				printAPI.indented(power, 37, o, colors.black, colors.yellow)
+				o = o + 1
+			end
+		end
+
+
+		if ( o - 5 ) > 15 then -- If more than 15 users
+			for i = 1,15 do
+				n = i + 4
+				term.setCursorPos(51, n)
+				term.setBackgroundColor(colors.lightGray)
+				term.setTextColor(colors.white)
+				if i == 15 then
+					term.write("v")
+				else
+					term.write(" ")
+				end
+				i = i + 1
+			end
+				if currentOffset == 0 then
+					printAPI.indented(" ", 51, 5, colors.white, colors.lightGray)
+				else
+					printAPI.indented("^", 51, 5, colors.white, colors.lightGray)
+				end
+		end
+
+	end
+
+	p = 0
+
+	while true do
+		local event, button, x, y = os.pullEvent( "mouse_click" )
+		if event == "mouse_click" and button == 1 then
+			if x >= 46 and x <= 50 and y == 2 then
+				drawSearchUser()  
+			elseif x >= 51 and x <= 51 and y == 5 then -- bovenste pijltje		
+				if p > 0 then
+					-- Go up
+					p = p - 1
+					drawLayout(p, o)
+					if p == 0 then
+						printAPI.indented(" ", 51, 5, colors.white, colors.lightGray)
+					end
+					if (o - 5) > (15 + p) then 
+						printAPI.indented("v", 51, 19, colors.white, colors.lightGray)
+					end		
+				end
+			elseif x >= 51 and x <= 51 and y == 19 then -- onderste pijltje		
+				if o > 15 and (o - 5) ~= (15 + p) then 
+					p = p + 1
+					drawLayout(p, o)
+					printAPI.indented("^", 51, 5, colors.white, colors.lightGray) -- check
+					if (o - 5) <= (15 + p) then -- if 16 == 16 then               -- check 22 - 4 = 18 ~= 15 + 2 = 17
+						printAPI.indented(" ", 51, 19, colors.white, colors.lightGray)
+					end
+				end
+			elseif x >= 1 and x <= 50 then
+				key = ( y - 4 ) + p
+				user = table[key] 
+				if user ~= nil then
+					drawEditSearchUser(table, user)
+					cUsername = user
+				end
+			end
+		end
+	end
+end
+
+function drawNewUser()
+	currentPage = "newUser"
+	getCurrentRoom = databaseAPI.getCurrentRoom() + 1
+	clearAll()
+	printAPI.clearScreen(colors.white)
+	printAPI.printHeader(colors.gray,3)
+	printAPI.printLogo(2,2, "New User")
+	printAPI.bgColor(colors.white)
+	buttonAPI.newButton(46,2,colors.gray,colors.white,4,1,"Back","Main_button")
+	printAPI.indented("Room: " .. getCurrentRoom, 1, 19, colors.gray, colors.white)   
+	printAPI.indented("Username:", 14, 7, colors.gray, colors.white)   
+	textBoxAPI.newTextBox("Days", false, 14, 8, colors.white, colors.lightGray, 23, 1, "Username")
+	printAPI.indented("Days: ", 14, 10, colors.gray, colors.white)   
+	textBoxAPI.newTextBox(nil, false, 14, 11, colors.white, colors.lightGray, 23, 1, "Days")
+	printAPI.indented("Password:", 14, 13, colors.gray, colors.white) 
+	buttonAPI.newButton(25,13,colors.lightGray,colors.white,24,1,"Let User Type Password","let_user_button")
+	parallel.waitForAll(checkForTextBoxes, checkForButtons, function() textBoxAPI.edit("Username") end)
+end
+
+-- Main Screen
+function drawMain()
+	currentPage = "Main"
+	clearAll()
+	clearUser()
+	printAPI.clearScreen(colors.white)
+	printAPI.printHeader(colors.gray,3)
+	printAPI.printLogo(2,2, "Main Page")
+	printAPI.bgColor(colors.white)
+	buttonAPI.newButton(42,2,colors.gray,colors.white,8,1,"Settings","settings") -- 2
+	buttonAPI.newButton(2,8,colors.orange,colors.white,24, 3,"New User","new_user")
+	buttonAPI.newButton(2,12,colors.cyan,colors.white,24, 3,"Search User","search_user") 
+	buttonAPI.newButton(27,8,colors.green,colors.white,24, 3,"Expire List","expired_users") 	
+	buttonAPI.newButton(27,12,colors.red,colors.white,24, 3,"Logout","logout")
+	printAPI.centered("Choose what you want to do:", 5, colors.gray, colors.white)
+	term.setTextColor(colors.lightGray)
+	term.setBackgroundColor(colors.white)
+	printAPI.centered("Made by Jasper", 19)
+	parallel.waitForAll(checkForTextBoxes, checkForButtons)
+end
+
+-- Login Screen
+function drawLogin()
+	currentPage = "Login"
+	clearAll()
+	printAPI.clearScreen(colors.white)
+	printAPI.printHeader(colors.gray,3)
+	printAPI.printLogo(2,2, "Login Page")
+	printAPI.bgColor(colors.white)
+	buttonAPI.newButton(13,14,colors.lightGray,colors.white,25,3,"Login","Login")
+	printAPI.indented("Username:", 14, 7, colors.gray, colors.white)   
+	textBoxAPI.newTextBox("Password", false, 14, 8, colors.white, colors.lightGray, 23, 1, "Username")
+	printAPI.indented("Password:", 14, 10, colors.gray, colors.white) 
+	textBoxAPI.newTextBox(nil, true, 14, 11, colors.white, colors.lightGray, 23, 1, "Password")
+	parallel.waitForAll(checkForTextBoxes, checkForButtons, function() textBoxAPI.edit("Username") end)
+end
+
+-- Check for Buttons
+function checkForButtons()
+ button = buttonAPI.handleClicks()
+ 	if button then
+  		textBoxAPI.saveCurrentTextBox("yes")
+  		if button == "Login" then
+ 			if textBoxAPI.getVariable("Username"):len() > 0 and textBoxAPI.getVariable("Password"):len() > 0 then
+ 			 if databaseAPI.getConnection() then
+ 				checkLogin = databaseAPI.checkUser(textBoxAPI.getVariable("Username"), textBoxAPI.getVariable("Password"))
+    			if tostring(checkLogin) == "true" then
+      				printAPI.bgColor(colors.white)
+      				printAPI.textColor(colors.green)
+				    currentUsername = textBoxAPI.getVariable("Username")
+				    currentPassword = textBoxAPI.getVariable("Password")
+  					currentRank = databaseAPI.getRank(currentUsername)
+  					if tostring(currentRank) == "2" then
+				    	printAPI.centered("Successful Login, redirecting..",5)
+				    	printAPI.hold(1)
+				    	drawMain()
+				    else
+					    term.setBackgroundColor(colors.white)
+					    term.setTextColor(colors.red)
+					    printAPI.centered("You don't have enough rights",5)
+					    printAPI.hold(2)
+					 	drawLogin()   
+				    end
+			   	else
+				    term.setBackgroundColor(colors.white)
+				    term.setTextColor(colors.red)
+				    printAPI.centered("Could not verify credentials.",5)
+				    printAPI.hold(2)
+				 	drawLogin()   
+    			end
+    		 else
+			      term.setBackgroundColor(colors.white)
+			      term.setTextColor(colors.red)
+			      printAPI.centered("No connection with Database.",5)
+			      fs.delete(".dbConnected")
+			      sleep(3)
+			      os.reboot()   		 	
+    		 end
+		   	else
+			    term.setBackgroundColor(colors.white)
+			    term.setTextColor(colors.red)
+			    printAPI.centered("You forget to fill something in",5)
+			    printAPI.hold(1)
+			 	drawLogin()   
+    		end
+    	elseif button == "Search" then
+    		username = textBoxAPI.getVariable("UserRoomSearch")
+    		if username:len() > 0 then
+	    		num = tonumber(username)
+	  			if not num then
+	    			table = databaseAPI.searchUser(username)
+	    			if table ~= "none" then
+	    				term.setBackgroundColor(colors.white)
+					    term.setTextColor(colors.green)
+					    printAPI.centered(#table .. " result(s)",5)
+					    printAPI.hold(0.5)
+					 	drawSearchUser2(table)
+	    			else
+	    				term.setBackgroundColor(colors.white)
+					    term.setTextColor(colors.red)
+					    printAPI.centered("No results",5)
+					    printAPI.hold(1)
+					 	drawSearchUser()
+	    			end
+	  			else
+	  				if tostring(databaseAPI.checkID(username)) == "true" then
+	  					username = databaseAPI.getUsername(username)
+	  					table = {username}
+	    				term.setBackgroundColor(colors.white)
+					    term.setTextColor(colors.green)
+					    printAPI.centered(#table .. " result(s)",5)
+					    printAPI.hold(0.5)
+					 	drawSearchUser2(table)	  					
+	  				else 
+	    				term.setBackgroundColor(colors.white)
+					    term.setTextColor(colors.red)
+					    printAPI.centered("No results",5)
+					    printAPI.hold(1)
+					 	drawSearchUser()
+	  				end
+	  			end
+	  		else
+			    term.setBackgroundColor(colors.white)
+			    term.setTextColor(colors.red)
+			    printAPI.centered("Please enter a Username or Room number",5)
+			    printAPI.hold(2)
+			 	drawSearchUser() 
+	  		end
+    	elseif button == "let_user_button" then
+    		if textBoxAPI.getVariable("Username"):len() > 0 then 
+    			if tostring(databaseAPI.checkUserExists(textBoxAPI.getVariable("Username"))) == "false" then
+		    		usern = textBoxAPI.getVariable("Username")
+		    		userdays = textBoxAPI.getVariable("Days")
+					term.setBackgroundColor(colors.white)
+		    		printAPI.textColor(colors.gray)
+		    		printAPI.centered("Waiting for user..", 19) 
+		    		function userPassword()
+			    		rednet.open(rednetModem)
+			    		rednet.send(receiverID, "newuser")
+			    		rednet.send(receiverID, usern)
+			    		password = nil
+			    		id, m = rednet.receive()
+			    		if id == receiverID then
+			    			password = m
+			    			passw = password
+			    		else
+			    			userPassword()
+			    		end
+
+			    		if password then
+			    			term.setBackgroundColor(colors.white)
+			    			rednet.send(receiverID, "Success")
+			    			rednet.close(rednetModem)
+							userroom = databaseAPI.getCurrentRoom() + 1
+							term.setBackgroundColor(colors.white)
+							term.setCursorPos(1,19)
+							term.clearLine()
+							printAPI.indented("Room: " .. userroom, 1, 19, colors.gray, colors.white)   
+							printAPI.textColor(colors.green)
+		    				printAPI.centered("Password Received", 19) 
+		    				printAPI.hold(2)
+		    				printAPI.textColor(colors.gray)
+							term.setBackgroundColor(colors.white)
+							term.setCursorPos(1,19)
+							term.clearLine()
+							printAPI.indented("Room: " .. userroom, 1, 19, colors.gray, colors.white)   
+		    				printAPI.centered("Creating user..", 19) 
+		    				-- Creating User
+		    				newUser = databaseAPI.createUser(usern, passw, tostring(userroom), tostring(userdays))
+
+		    				if newUser == "true" then
+		    					clearAll()
+								printAPI.drawAlert("User Created", "User created. Room: " .. tostring(userroom),false,"close")
+								checkForButtons()
+							else
+								clearAll()
+								printAPI.drawAlert("Error: " .. newUser, "Something went wrong please try it again later",false,"close")
+								checkForButtons()
+		    				end
+			    		else
+			    			userPassword()
+			    		end
+		    		end
+		    		userPassword()
+		    	else
+	    			printAPI.drawAlert("User exist", "This user does already exist.", 2)
+	  				clearDetails()
+	  				drawNewUser()   
+		    	end
+    		else
+				printAPI.drawAlert("Forgot to fill in", "You forget to fill something in.", 2)
+  				clearDetails()
+  				drawNewUser()   
+    		end
+    	elseif button == "LoginButton" then
+    		drawLogin()
+    	elseif button == "settings" then
+    		clearAll()
+  			printAPI.drawAlert("Not finished yet", "This is not finished yet",false,"close1")
+  			checkForButtons()
+		elseif button == "close1" then  			
+			if cUsername == currentUsername then
+				clearAll()
+				drawLogin()
+			else
+				drawMain()
+			end
+		elseif button == "close2" then
+			drawEditSearchUser(cTable, cUsername)
+		elseif button == "close3" then
+			drawMain()		
+  		elseif button == "close" then
+  				cTable = {}
+  				cUsername = ""
+  				drawMain()
+  		elseif button == "zz_button" then
+  			drawMain()  				
+  		elseif button == "Main_button" then
+  			drawMain()
+  		elseif button == "remove_room_button" then
+  			if cUsername ~= "" then
+  				d = databaseAPI.removeRoom(cUsername)
+	  			if tostring(d) == "true" then
+	  				clearAll()
+	  				printAPI.drawAlert("Room removed", "Room has been removed from '" .. cUsername .. "'",false,"close2")
+	  				checkForButtons()
+	  			else
+					clearAll()
+					printAPI.drawAlert("Error: " .. d, "Something went wrong please try it again later",false,"close")
+					checkForButtons()
+	  			end
+  			else
+				clearAll()
+				printAPI.drawAlert("Error: Missing Username", "Something went wrong please try it again later",false,"close")
+				checkForButtons()
+  			end
+  		elseif button == "expired_users" then
+  			drawExpiredUsers()
+  		elseif button == "remove_account_button" then
+  			if cUsername ~= "" then
+  				d = databaseAPI.deleteUser(cUsername, "hisPassword")  	
+  				currentPage = "searchEditUser"			
+	  			if tostring(d) == "true" then
+		    		clearAll()	  				
+	  				printAPI.drawAlert("User removed", "User '" .. cUsername .. "' has been deleted.",false,"close3")
+	  				checkForButtons()
+	  			else
+					clearAll()
+					printAPI.drawAlert("Error: " .. d, "Something went wrong please try it again later",false,"close")
+					checkForButtons()
+	  			end
+  			else
+				clearAll()
+				printAPI.drawAlert("Error: Missing Username", "Something went wrong please try it again later",false,"close")
+				checkForButtons()
+  			end
+  		elseif button == "change_power_button" then
+			power = databaseAPI.getPowerByUsername(cUsername)
+			currentPage = "searchEditUser"
+			if tostring(power) == "1" then
+				databaseAPI.setPower(cUsername, 2)
+			else
+				databaseAPI.setPower(cUsername, 1)
+			end
+			clearAll()
+			printAPI.drawAlert("Power Switched", "Power of user '" .. cUsername .. "' has been switched.",false,"close2")
+	  		checkForButtons()
+  		elseif button == "change_access_button" then
+  			access = databaseAPI.getAccessByUsername(cUsername)
+  			currentPage = "searchEditUser"
+			if tostring(access) == "1" then
+				databaseAPI.setAccess(cUsername, 2)
+			else
+				databaseAPI.setAccess(cUsername, 1)
+			end  			
+			clearAll()
+			printAPI.drawAlert("Access Switched", "Access of user '" .. cUsername .. "' has been switched.",false,"close2")
+	  		checkForButtons()
+  		elseif button == "b1_button" then
+  			drawSearchUser2(cTable)  		  			
+  		elseif button == "b_button" then
+  			drawSearchUser()  			
+  		elseif button == "logout" then
+  			clearAll()
+  			printAPI.drawAlert("Logged out", "You are now logged out.", 3)
+  			clearDetails()
+  			drawLogin()      
+  		elseif button == "new_user"	then
+  			getCurrentRoom = databaseAPI.getCurrentRoom()
+  			if tostring(getCurrentRoom) == "30" then
+  				clearAll()
+				printAPI.drawAlert("Hotel full", "There are no rooms available",false,"close")
+				checkForButtons()
+  			else
+  				drawNewUser()
+  			end
+  		elseif button == "search_user"	then
+  			drawSearchUser()  			
+ 		end
+ 	end
+end
+
+-- Boot screen 
+printAPI.transition(colors.lightGray, 0.3, colors.white)
+term.setTextColor(colors.gray)
+local lockArt = [[
+$   $ $$$$$ $$$$$ $$$$$  $
+$   $ $   $   $   $      $  
+$$$$$ $   $   $   $$$$$  $
+$   $ $   $   $   $      $  
+$   $ $$$$$   $   $$$$$  $$$$$
+]] 
+local w, h = term.getSize()
+local lockX = math.ceil((w/2) - 15)
+local lineNum = 4
+for line in lockArt:gmatch("[^\n]+") do
+ 	if lineNum-4 == 5 then lineNum = lineNum + 1 end
+ 	  if lineNum-4 >= 5 then lockX = 16 end
+  		term.setCursorPos(lockX, lineNum)
+  		term.write(line)
+  		lineNum = lineNum + 1
+end
+term.setTextColor(colors.blue)
+printAPI.centered("Hotel Manager", 15)
+printAPI.hold(1.6)
+printAPI.clearScreen(colors.white)
+printAPI.printHeader(colors.gray, 3)
+
+if checkFirstTime() == false then
+	printAPI.printLogo(2,2, "Database Connection Check")
+	printAPI.indented("We are trying to connect to the Database..", 2, 5, colors.gray, colors.white)
+	printAPI.indented("Please wait and don't turn off the computer.", 2, 7, colors.lightGray, colors.white)
+	printAPI.drawBox(2, 10, 50, 18, colors.lightGray)
+	printAPI.log("Connecting to database..", "Info", 2, 10)
+	printAPI.hold(2)
+	dbAnswer = databaseAPI.getConnection()
+	if dbAnswer then
+		printAPI.log("Connected to Database.","Success", 2, 11)
+		printAPI.hold(1)
+		printAPI.log("Redirecting in 2 seconds..","Info", 2, 12)
+		printAPI.hold(2)
+		databaseAPI.saveSettings()
+		drawLogin()
+	else
+		printAPI.log("Could not connect to the Database.","Failed", 2, 11)
+		printAPI.hold(2)
+		printAPI.log("The Database is probably not available.","Info", 2, 12)
+		printAPI.log("Please, try it again later.","Info", 2, 13)
+		printAPI.hold(2)
+		printAPI.log("Shutting down in 5 seconds..","Info", 2, 14)
+		printAPI.hold(5)
+		os.shutdown()
+	end
+end
+
+drawLogin()
+parallel.waitForAll(checkForTextBoxes, checkForButtons, function() textBoxAPI.edit("Username") end)
