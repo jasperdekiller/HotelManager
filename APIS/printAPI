@@ -1,0 +1,245 @@
+os.loadAPI("APIS/buttonAPI")
+os.loadAPI("APIS/textBoxAPI")
+
+local x, y = term.getSize()
+
+function clearLineH(bColor, X, Y, Width) 
+ if term.isColor() then
+  term.setBackgroundColor(bColor)
+  local newX = X
+  local totalX = X + Width
+  repeat
+   term.setCursorPos(newX, Y)
+   write(" ")
+   newX = newX + 1
+  until newX == totalX
+ end
+end
+
+function printHeader(color, maxLines)
+    if term.isColor() then
+      term.setBackgroundColor(color)        
+        for i = 1, maxLines do
+            term.setCursorPos(1,i)
+            term.clearLine()
+        end
+    end
+end
+
+function hold(timeSpeed)
+    timeSpeed = timeSpeed or 1
+    sleep(timeSpeed)
+end
+
+function transition(firstColor, timeSpeed, secondColor)
+    if term.isColor() then
+        timeSpeed = timeSpeed or 1        
+        term.setBackgroundColor(firstColor)
+        term.clear()
+        sleep(timeSpeed)
+        term.setBackgroundColor(secondColor)
+        term.clear()
+    end
+end
+
+function clearScreen(bColor)
+ if term.isColor() then
+  term.setBackgroundColor(bColor)
+  term.clear()
+ end
+end
+
+function allColor(tColor, bColor)
+    if term.isColor() then
+        term.setTextColor(tColor)
+        term.setBackgroundColor(bColor)
+    else
+        term.setTextColor(colors.white)
+        term.setBackgroundColor(colors.black)
+    end
+end
+
+function textColor(tColor)
+    if term.isColor() then
+        term.setTextColor(tColor)
+    else
+        term.setTextColor(colors.white)
+        term.setBackgroundColor(colors.black)
+    end
+end
+
+function bgColor(bColor)
+    if term.isColor() then
+        term.setBackgroundColor(bColor)
+    else
+        term.setTextColor(colors.white)
+        term.setBackgroundColor(colors.black)
+    end
+end
+
+ function backgroundSet(bColor)
+    bgColor(bColor)
+    term.clear()
+end
+
+function resetBackground()
+    allColor(colors.white, colors.black)
+    term.clear()
+end
+
+function centered(str, height, tColor, bColor)
+    term.setCursorPos(x / 2 - #str / 2, height)
+    if tColor and bColor then
+        allColor(tColor, bColor)
+    elseif tColor then
+        textColor(tColor)
+    elseif bColor then
+        bgColor(bColor)
+    end
+    term.write(str)
+end
+
+function left(str, height, tColor, bColor)
+    term.setCursorPos(2, height)
+    if tColor and bColor then
+        allColor(tColor, bColor)
+    elseif tColor then
+        textColor(tColor)
+    elseif bColor then
+        bgColor(bColor)
+    end
+    term.write(str)
+end
+
+function right(str, height, tColor, bColor)
+    term.setCursorPos(x - #str, height)
+    if tColor and bColor then
+        allColor(tColor, bColor)
+    elseif tColor then
+        textColor(tColor)
+    elseif bColor then
+        bgColor(bColor)
+    end
+    term.write(str)
+end
+
+function log(str, level, xPos, yPos)
+    if term.isColor() and str and level and xPos and yPos then
+      textColor = colors.gray
+        if level == "Success" then
+            term.setCursorPos(xPos, yPos)
+            term.setTextColor(colors.green)
+            term.write("[Success] ")
+            term.setTextColor(textColor)
+            term.write(str)
+        elseif level == "Failed" then
+            term.setCursorPos(xPos, yPos)
+            term.setTextColor(colors.red)
+            term.write("[Failed] ")
+            term.setTextColor(textColor)
+            term.write(str)            
+        elseif level == "Info" then
+            term.setCursorPos(xPos, yPos)
+            term.setTextColor(colors.blue)
+            term.write("[Info] ")            
+            term.setTextColor(textColor)
+            term.write(str)            
+        end
+    end
+end
+
+function indented(str, indent, height, tColor, bColor)
+    term.setCursorPos(indent, height)
+    if tColor and bColor then
+        allColor(tColor, bColor)
+    elseif tColor then
+        textColor(tColor)
+    elseif bColor then
+        bgColor(bColor)
+    end
+    term.write(str)
+end
+
+function printLogo(X,Y,title)
+ term.setCursorPos(X,Y)
+ term.setTextColor(colors.white)
+ write("Hotel Manager ")
+ term.setTextColor(colors.lightGray)
+ write(title)
+end
+
+function clearLineV(X,Y,bColor,txtColor,height,character)
+ if term.isColor() then
+  local characterType = nil
+  if character then
+   characterType = character
+  else
+   characterType = " "
+  end
+  term.setTextColor(txtColor)
+  term.setBackgroundColor(bColor)
+  local newY = Y
+  local totalY = Y + height
+  repeat
+   term.setCursorPos(X, newY)
+   write(characterType)
+   newY = newY + 1
+  until newY == totalY
+ end
+end
+
+function handleAlertBox()
+    button = buttonAPI.handleClicks()
+    if button then
+        textBoxAPI.saveCurrentTextBox("yes")
+        if button == "close2" then
+            drawMain()
+        end
+    end
+end
+
+function drawBorder(xMin, yMin, xMax, yMax, color)
+    paintutils.drawBox(xMin, yMin, xMax, yMax, color)
+end
+
+function drawBox(xMin, yMin, xMax, yMax, color)
+    paintutils.drawFilledBox(xMin, yMin, xMax, yMax, color)
+end
+
+function drawAlert(title, info, time, remove_close)
+    drawBox(1, 6, 52, 14, colors.cyan)
+    clearLineH(colors.blue, 1, 6, 52) 
+    centered(title, 6, colors.white, colors.blue)
+    centered("  "..info, 9, colors.white, colors.cyan)
+    if remove_close == nil then
+     buttonAPI.newButton(51,6,colors.red,colors.white,1,1,"X","close", true)
+        if time then
+            parallel.waitForAny(handleAlertBox, function() sleep(time) return end)
+        else
+            handleAlertBox()
+        end
+    elseif remove_close == "yes" then
+        buttonAPI.newButton(13,13,colors.green,colors.white,5,1," Yes ","account_delete_yes")
+        buttonAPI.newButton(35,13,colors.red,colors.white,4,1," No ","account_delete_no") 
+    elseif remove_close == "close" then
+        buttonAPI.newButton(33,13,colors.blue,colors.white,4,1," Close ","close")                
+    elseif remove_close == "close1" then
+        buttonAPI.newButton(33,13,colors.blue,colors.white,4,1," Close ","close1")                
+    elseif remove_close == "close2" then
+        buttonAPI.newButton(33,13,colors.blue,colors.white,4,1," Close ","close2")   
+    elseif remove_close == "close3" then
+        buttonAPI.newButton(33,13,colors.blue,colors.white,4,1," Close ","close3")                        
+    end
+end
+
+function len(str) return str:len() end
+
+function upper(str) return str:upper() end
+
+function lower(str) return str:lower() end
+
+function replace(str, find, replace) return str:gsub(find, replace) end
+
+function makeLength(str, startLen, endLen) return str:sub(startLen, endLen) end
+
+function rep(str, times) return str:rep(times) end
