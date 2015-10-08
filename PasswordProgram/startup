@@ -1,0 +1,70 @@
+-- Anti terminate
+
+os.pullEvent = os.pullEventRaw
+
+-- Vars
+
+local clientID = 1
+local x, y = term.getSize()
+
+os.loadAPI("shaAPI")
+
+rednet.open("top")
+
+function printLayout()
+  term.setBackgroundColor(colors.white)
+  term.clear()
+  term.setBackgroundColor(colors.gray)
+  for i = 1, 3 do
+    term.setCursorPos(1, i)
+    term.clearLine()
+  end
+  term.setCursorPos(2,2)
+  term.setTextColor(colors.white)
+  term.write("Dream Hotel")
+end
+
+function centered(str, height, tColor, bColor)
+    term.setCursorPos(x / 2 - #str / 2, height)
+    term.setTextColor(tColor)
+    term.setBackgroundColor(bColor)
+    term.write(str)
+end
+
+function Start()
+  printLayout()
+  centered("Welcome to Dream Hotel!", 9, colors.gray, colors.white)
+  centered("Where all dreams come true", 11, colors.lightGray, colors.white)
+  centered("Made by Jasper", 19, colors.lightGray, colors.white)
+  id, m = rednet.receive()
+  if id == clientID then
+    if m == "newuser" then
+      id, m = rednet.receive()
+      us = nil
+      if id == clientID then
+        us = m
+      end
+      if us ~= nil then
+
+        printLayout()
+        centered("Hello, " .. us .. "!", 9, colors.gray, colors.white)
+        centered("Please enter your password.", 10, colors.gray, colors.white)
+        centered("*All passwords are hashed*", 19, colors.lightGray, colors.white)
+        centered("Password: ", 12, colors.gray, colors.white)
+        pass = read("*")
+        pass = shaAPI.hash(pass)
+        rednet.send(clientID, pass)
+        id, m = rednet.receive()
+        if id == clientID then
+          if m == "Success" then
+            printLayout()
+            Start()
+          end
+        end
+
+      end
+    end  
+  end  
+end
+
+Start()
