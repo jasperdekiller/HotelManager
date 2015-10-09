@@ -209,7 +209,7 @@ function sendReturn( sReturn )
 end
 
 function getExpireUsers()
-    pCheck()
+    
     request = http.post(url, "command=checkForExpires")    
     answer = request.readAll()
     answer = string.gsub(answer, "<br />", "\n")
@@ -257,7 +257,7 @@ function getConnection()
 end
 
 function getCurrentRoom()
-    pCheck()
+    
     request = http.post(url, "command=getCurrentRoom")    
     answer = request.readAll()
     return sendReturn(answer)
@@ -274,14 +274,14 @@ function pCheck()
 end
 
 function removeRoom(username)
-    pCheck()
+    
     request = http.post(url, "command=setRoom&username="..textutils.urlEncode(tostring(username)).."&variable="..textutils.urlEncode(tostring("2")))
     answer = request.readAll()
     return sendReturn(answer)
 end
 
 function searchUser(username)
-    pCheck()
+    
     request = http.post(url, "command=checkForUser&username="..textutils.urlEncode(tostring(username)))    
     answer = request.readAll()
     data = {}
@@ -314,14 +314,14 @@ function searchUser(username)
 end
 
 function getExpireDaysInfoByUsername(username)
-    pCheck()
+    
     request = http.post(url, "command=getExpireDaysInfoByUsername&username="..textutils.urlEncode(tostring(username)))    
     answer = request.readAll()
     return sendReturn(answer)
 end
 
 function getRank(username)
-	pCheck()
+	
 	request = http.post(url, "command=getRank&username="..textutils.urlEncode(tostring(username)))    
     answer = request.readAll()
 	return sendReturn(answer)
@@ -339,112 +339,112 @@ function getUrl()
 end
 
 function checkLogin(username, password)
-	pCheck()
+	
  	request = http.post(url, "command=login&username="..textutils.urlEncode(tostring(username)).."&password="..textutils.urlEncode(sha256(tostring(password))))
     answer = request.readAll()
 	return sendReturn(answer)
 end
 
 function getAmount(username, password)
-	pCheck()
+	
   	request = http.post(url, "command=getMoney&username="..textutils.urlEncode(tostring(username)).."&password="..textutils.urlEncode(sha256(tostring(password))))
   	answer = request.readAll()
 	return sendReturn(answer)
 end
 
 function setAccess(username, variable)
-    pCheck()
+    
     request = http.post(url, "command=setAccess&username="..textutils.urlEncode(tostring(username)).."&variable="..textutils.urlEncode(tostring(variable)))
     answer = request.readAll()
     return sendReturn(answer)
 end
 
 function setPower(username, variable)
-    pCheck()
+    
     request = http.post(url, "command=setPower&username="..textutils.urlEncode(tostring(username)).."&variable="..textutils.urlEncode(tostring(variable)))
     answer = request.readAll()
     return sendReturn(answer)
 end
 
 function changeUsername(oldUsername, password, newUsername)
-	pCheck()
+	
 	request = http.post(url, "command=changeUsername&oldUsername="..textutils.urlEncode(tostring(oldUsername)).."&password="..textutils.urlEncode(sha256(tostring(password))).."&newUsername="..textutils.urlEncode(tostring(newUsername)).."&hashedUsername="..textutils.urlEncode(sha256(tostring(newUsername))))
 	answer = request.readAll()
 	return sendReturn(answer)
 end	
 
 function changePassword(username, oldPassword, newPassword) 
-	pCheck()
+	
 	request = http.post(url, "command=changePassword&username="..textutils.urlEncode(tostring(username)).."&oldPassword="..textutils.urlEncode(sha256(tostring(oldPassword))).."&newPassword="..textutils.urlEncode(sha256(tostring(newPassword))))
     answer = request.readAll()
 	return sendReturn(answer)
 end
 
 function createUser(username, password, room, days)
-	pCheck()
+	
   	request = http.post(url, "command=addUser&room="..textutils.urlEncode(tostring(room)).."&days="..textutils.urlEncode(tostring(days)).."&username="..textutils.urlEncode(tostring(username)).."&password="..textutils.urlEncode(tostring(password)))
     answer = request.readAll()
 	return sendReturn(answer)
 end
 
 function deleteUser(username, password)
-	pCheck()
+	
 	request = http.post(url, "command=deleteUser&username="..textutils.urlEncode(tostring(username)).."&password="..textutils.urlEncode(sha256(tostring(password))))
     answer = request.readAll()
 	return sendReturn(answer)
 end
 
 function getID(username)
-	pCheck()
+	
 	request = http.post(url, "command=getID&username="..textutils.urlEncode(tostring(username)))
     answer = request.readAll()
 	return sendReturn(answer)
 end
 
 function getAccessByUsername(username)
-    pCheck()
+    
     request = http.post(url, "command=getAccessInfoByUsername&username="..textutils.urlEncode(tostring(username)))
     answer = request.readAll()
     return sendReturn(answer)
 end
 
 function getPowerByUsername(username)
-    pCheck()
+    
     request = http.post(url, "command=getPowerInfoByUsername&username="..textutils.urlEncode(tostring(username)))
     answer = request.readAll()
     return sendReturn(answer)
 end
 
 function getUsername(ID)
-	pCheck()
+	
 	request = http.post(url, "command=getUsername&id="..textutils.urlEncode(tostring(ID)))
     answer = request.readAll()
 	return sendReturn(answer)
 end
 
 function checkUser(username, password)
-	pCheck()
+	
 	request = http.post(url, "command=checkUser&username="..textutils.urlEncode(tostring(username)).."&password="..textutils.urlEncode(sha256(tostring(password))))
     answer = request.readAll()
 	return sendReturn(answer)
 end
 
 function checkUserExists(username)
-	pCheck()
+	
 	request = http.post(url, "command=checkUserExists&username="..textutils.urlEncode(tostring(username)))
     answer = request.readAll()
 	return sendReturn(answer)
 end
 
 function checkID(id)
-	pCheck()
+	
 	request = http.post(url, "command=checkRoomExists&id="..textutils.urlEncode(tostring(id)))
     answer = request.readAll()
 	return sendReturn(answer)
 end
 
 function changeRank(username, password, newRank)
-	pCheck()
+	
 	request = http.post(url, "command=changeRank&username="..textutils.urlEncode(tostring(username)).."&password="..textutils.urlEncode(sha256(tostring(password))).."&rank="..textutils.urlEncode(tostring(newRank)))
 	answer = request.readAll()
     answer = request.readAll()
