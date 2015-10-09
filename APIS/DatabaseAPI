@@ -411,7 +411,11 @@ end
 function getPowerByUsername(username)
     
     request = http.post(url, "command=getPowerInfoByUsername&username="..textutils.urlEncode(tostring(username)))
-    answer = request.readAll()
+    if request ~= nil then
+        answer = request.readAll()
+    else
+        getPowerByUsername(username)
+    end
     return sendReturn(answer)
 end
 
