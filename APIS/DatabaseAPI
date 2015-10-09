@@ -209,9 +209,12 @@ function sendReturn( sReturn )
 end
 
 function getExpireUsers()
-    
     request = http.post(url, "command=checkForExpires")    
-    answer = request.readAll()
+    if request ~= nil then
+        answer = request.readAll()
+    else
+        getExpireUsers()
+    end
     answer = string.gsub(answer, "<br />", "\n")
 
     f = fs.open("test", "w")
@@ -257,9 +260,12 @@ function getConnection()
 end
 
 function getCurrentRoom()
-    
     request = http.post(url, "command=getCurrentRoom")    
-    answer = request.readAll()
+    if request ~= nil then
+        answer = request.readAll()
+    else
+        getCurrentRoom()
+    end
     return sendReturn(answer)
 end
 
@@ -274,16 +280,22 @@ function pCheck()
 end
 
 function removeRoom(username)
-    
     request = http.post(url, "command=setRoom&username="..textutils.urlEncode(tostring(username)).."&variable="..textutils.urlEncode(tostring("2")))
-    answer = request.readAll()
+    if request ~= nil then
+        answer = request.readAll()
+    else
+        removeRoom(username)
+    end
     return sendReturn(answer)
 end
 
 function searchUser(username)
-    
     request = http.post(url, "command=checkForUser&username="..textutils.urlEncode(tostring(username)))    
-    answer = request.readAll()
+    if request ~= nil then
+        answer = request.readAll()
+    else
+        searchUser(username)
+    end
     data = {}
     if tostring(answer) ~= "none" then
         answer = string.gsub(answer, "<br />", "\n")
@@ -314,16 +326,22 @@ function searchUser(username)
 end
 
 function getExpireDaysInfoByUsername(username)
-    
     request = http.post(url, "command=getExpireDaysInfoByUsername&username="..textutils.urlEncode(tostring(username)))    
-    answer = request.readAll()
+    if request ~= nil then
+        answer = request.readAll()
+    else
+        getExpireDaysInfoByUsername(username)
+    end
     return sendReturn(answer)
 end
 
 function getRank(username)
-	
 	request = http.post(url, "command=getRank&username="..textutils.urlEncode(tostring(username)))    
-    answer = request.readAll()
+    if request ~= nil then
+        answer = request.readAll()
+    else
+        getRank(username)
+    end
 	return sendReturn(answer)
 end
 
@@ -339,77 +357,106 @@ function getUrl()
 end
 
 function checkLogin(username, password)
-	
  	request = http.post(url, "command=login&username="..textutils.urlEncode(tostring(username)).."&password="..textutils.urlEncode(sha256(tostring(password))))
-    answer = request.readAll()
+    if request ~= nil then
+        answer = request.readAll()
+    else
+        checkLogin(username, password)
+    end
 	return sendReturn(answer)
 end
 
 function getAmount(username, password)
-	
   	request = http.post(url, "command=getMoney&username="..textutils.urlEncode(tostring(username)).."&password="..textutils.urlEncode(sha256(tostring(password))))
-  	answer = request.readAll()
+    if request ~= nil then
+        answer = request.readAll()
+    else
+        getAmount(username, password)
+    end
 	return sendReturn(answer)
 end
 
 function setAccess(username, variable)
-    
     request = http.post(url, "command=setAccess&username="..textutils.urlEncode(tostring(username)).."&variable="..textutils.urlEncode(tostring(variable)))
-    answer = request.readAll()
+    if request ~= nil then
+        answer = request.readAll()
+    else
+        setAccess(username, variable)
+    end
     return sendReturn(answer)
 end
 
 function setPower(username, variable)
-    
     request = http.post(url, "command=setPower&username="..textutils.urlEncode(tostring(username)).."&variable="..textutils.urlEncode(tostring(variable)))
-    answer = request.readAll()
+    if request ~= nil then
+        answer = request.readAll()
+    else
+        setPower(username, variable)
+    end
     return sendReturn(answer)
 end
 
 function changeUsername(oldUsername, password, newUsername)
-	
 	request = http.post(url, "command=changeUsername&oldUsername="..textutils.urlEncode(tostring(oldUsername)).."&password="..textutils.urlEncode(sha256(tostring(password))).."&newUsername="..textutils.urlEncode(tostring(newUsername)).."&hashedUsername="..textutils.urlEncode(sha256(tostring(newUsername))))
-	answer = request.readAll()
+    if request ~= nil then
+        answer = request.readAll()
+    else
+        changeUsername(oldUsername, password, newUsername)
+    end
 	return sendReturn(answer)
 end	
 
 function changePassword(username, oldPassword, newPassword) 
-	
 	request = http.post(url, "command=changePassword&username="..textutils.urlEncode(tostring(username)).."&oldPassword="..textutils.urlEncode(sha256(tostring(oldPassword))).."&newPassword="..textutils.urlEncode(sha256(tostring(newPassword))))
-    answer = request.readAll()
+    if request ~= nil then
+        answer = request.readAll()
+    else
+        changePassword(username, oldPassword, newPassword) 
+    end
 	return sendReturn(answer)
 end
 
 function createUser(username, password, room, days)
-	
   	request = http.post(url, "command=addUser&room="..textutils.urlEncode(tostring(room)).."&days="..textutils.urlEncode(tostring(days)).."&username="..textutils.urlEncode(tostring(username)).."&password="..textutils.urlEncode(tostring(password)))
-    answer = request.readAll()
+    if request ~= nil then
+        answer = request.readAll()
+    else
+        createUser(username, password, room, days)
+    end
 	return sendReturn(answer)
 end
 
 function deleteUser(username, password)
-	
 	request = http.post(url, "command=deleteUser&username="..textutils.urlEncode(tostring(username)).."&password="..textutils.urlEncode(sha256(tostring(password))))
-    answer = request.readAll()
+    if request ~= nil then
+        answer = request.readAll()
+    else
+        deleteUser(username, password)
+    end
 	return sendReturn(answer)
 end
 
 function getID(username)
-	
 	request = http.post(url, "command=getID&username="..textutils.urlEncode(tostring(username)))
-    answer = request.readAll()
+    if request ~= nil then
+        answer = request.readAll()
+    else
+        getID(username)
+    end
 	return sendReturn(answer)
 end
 
 function getAccessByUsername(username)
-    
     request = http.post(url, "command=getAccessInfoByUsername&username="..textutils.urlEncode(tostring(username)))
-    answer = request.readAll()
+    if request ~= nil then
+        answer = request.readAll()
+    else
+        getAccessByUsername(username)
+    end
     return sendReturn(answer)
 end
 
 function getPowerByUsername(username)
-    
     request = http.post(url, "command=getPowerInfoByUsername&username="..textutils.urlEncode(tostring(username)))
     if request ~= nil then
         answer = request.readAll()
@@ -420,37 +467,51 @@ function getPowerByUsername(username)
 end
 
 function getUsername(ID)
-	
 	request = http.post(url, "command=getUsername&id="..textutils.urlEncode(tostring(ID)))
-    answer = request.readAll()
+    if request ~= nil then
+        answer = request.readAll()
+    else
+        getUsername(ID)
+    end
 	return sendReturn(answer)
 end
 
 function checkUser(username, password)
-	
 	request = http.post(url, "command=checkUser&username="..textutils.urlEncode(tostring(username)).."&password="..textutils.urlEncode(sha256(tostring(password))))
-    answer = request.readAll()
+    if request ~= nil then
+        answer = request.readAll()
+    else
+        checkUser(username, password)
+    end
 	return sendReturn(answer)
 end
 
 function checkUserExists(username)
-	
 	request = http.post(url, "command=checkUserExists&username="..textutils.urlEncode(tostring(username)))
-    answer = request.readAll()
+    if request ~= nil then
+        answer = request.readAll()
+    else
+        checkUserExists(username)
+    end
 	return sendReturn(answer)
 end
 
 function checkID(id)
-	
 	request = http.post(url, "command=checkRoomExists&id="..textutils.urlEncode(tostring(id)))
-    answer = request.readAll()
+    if request ~= nil then
+        answer = request.readAll()
+    else
+        checkID(id)
+    end
 	return sendReturn(answer)
 end
 
 function changeRank(username, password, newRank)
-	
 	request = http.post(url, "command=changeRank&username="..textutils.urlEncode(tostring(username)).."&password="..textutils.urlEncode(sha256(tostring(password))).."&rank="..textutils.urlEncode(tostring(newRank)))
-	answer = request.readAll()
-    answer = request.readAll()
+    if request ~= nil then
+        answer = request.readAll()
+    else
+        changeRank(username, password, newRank)
+    end
 	return sendReturn(answer)
 end
