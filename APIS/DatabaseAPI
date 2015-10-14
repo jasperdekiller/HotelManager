@@ -193,7 +193,7 @@ end
 
 -- Some variables --
 
-local url = "http://goggleos.comyr.com/commands.php"
+local url = "http://retrobank.16mb.com/commands.php"
 
 
 function sendReturn( sReturn )
