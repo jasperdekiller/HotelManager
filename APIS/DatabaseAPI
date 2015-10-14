@@ -251,7 +251,7 @@ function getConnection()
     	if answer == "You need to enter a command!" then
     		return sendReturn(answer)
     	else
-    		return false
+    		return answer
     	end
     else
         fs.delete(".dbConnected")
