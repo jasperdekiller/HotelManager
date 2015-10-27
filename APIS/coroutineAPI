@@ -1,0 +1,22 @@
+coroutines = { }
+
+function createCoroutine( Function )
+	coroutines[#coroutines + 1] = coroutine.create( Function ) 
+end
+
+function loop()
+	while true do  
+		local b = 0
+		for k,v in pairs( coroutines ) do
+			if coroutine.status( v ) ~= "dead" then b = b + 1 end    
+		end
+
+		if b < 1 then break end
+		local eventData = { coroutine.yield() }
+
+		for k,v in pairs( coroutines ) do
+			pcall( coroutine.resume( v, unpack( eventData ) ) )
+		end
+	end
+end
+
