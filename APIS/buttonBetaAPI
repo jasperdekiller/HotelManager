@@ -1,0 +1,142 @@
+local Parent = {backgroundColor = colors.white}
+
+function Parent:checkClickEvent(event,side,x,y)
+        -- maybe optimize search for element with approximation?
+        for i = 1, self.xPos do
+                for j = 1, self.yPos do
+                        if self.elements[i][j] ~= nil then
+                                if self.elements[i][j]:isClicked(x,y) then
+                                        self.elements[i][j]:execFunction()
+                                end
+                        end
+                end
+        end
+end
+
+function Parent:new(o, xPos, yPos)
+	o = o or {}
+	setmetatable(o, self)
+	self.__index = self
+
+	o.xPos = xPos
+	o.yPos = yPos
+	o.backgroundColor = Parent.backgroundColor
+
+	o.elements = {}
+    for i = 1, xPos do
+        o.elements[i] = {}
+        for j = 1, yPos do
+            o.elements[i][j] = nil
+        end
+    end    
+
+	return o
+end
+
+function Parent:addButton(button)
+	if button ~= nil then -- Check if button exists
+		xPos = button.xPos
+		yPos = button.yPos
+		if xPos <= self.xPos and yPos <= self.yPos then
+			self.elements[xPos][yPos] = button
+		end
+    else
+    	error("You are trying to add a Button that does not exist! Create it first before adding it.")
+    end
+end
+
+function Parent:draw()
+	term.setBackgroundColor(self.backgroundColor)
+	term.clear()
+	if self ~= nil then
+		if #self.elements ~= 0 then
+	        for i = 1, self.xPos do
+	                for j = 1, self.yPos do
+	                        if self.elements[i][j] ~= nil then
+	                                self.elements[i][j]:draw()
+	                        end
+	                end
+	        end
+    	end
+    else
+    	error("You are trying to draw a Screen that does not exist!")
+    end
+end
+
+
+local Button = {
+				xPos = 1,
+				yPos = 1,
+				Text = "Test",
+				Height = 1,
+				Length = 1,
+				backgroundColor = colors.green,
+				textColor = colors.white
+			   }
+
+function Button:new(o, Text, Function, FuncParams)
+		o = o or {}   -- create object if user does not provide one
+		setmetatable(o, self)
+		self.__index = self
+
+		o.xPos = Button.xPos
+		o.yPos = Button.yPos
+		o.Text = Text or Button.Text
+		o.Function = Function or nil
+		o.FunctionParams = FuncParams or nil
+		o.Length = (string.len(Button.Text) + 2) 
+		o.Height = Button.Height
+
+		return o
+end
+
+function Button:execFunction()
+	if self ~= nil then
+		if self.Function ~= nil then
+			if self.FuncParams then
+                self.Function(unpack(self.params))
+                return true
+            else
+				func = unpack(self.Function)
+				func(self)
+			end
+		end
+	else
+		error("You are trying to execute a function of a button that does not exists.")
+	end
+end
+
+function Button:isClicked(x,y)
+        if x >= self.xPos and x <= (self.xPos + #self.Text) - 1 then
+                if y == self.yPos then
+                    return true
+                end
+        end
+        return false
+end
+
+function Button:center()
+	if self ~= nil then
+		x, y = term.getSize()
+		self.xPos = math.ceil((x / 2) - (self.Length / 2))
+		-- self.xPos = x / 2 - self.Length / 2
+	else
+		error("You are trying to center a button that does not exists.")
+	end
+end
+
+function Button:draw ()
+	xPos = self.xPos
+	yPos = self.yPos
+	Text = self.Text
+
+	bColor = self.backgroundColor
+	tColor = self.textColor
+
+	term.setBackgroundColor(bColor)
+	term.setTextColor(tColor)
+  	local X = xPos + math.floor( self.Length / 2 - #Text / 2 )
+  	local Y = yPos + math.floor( self.Height / 2 )
+  	term.setCursorPos(X, Y)
+	term.write(" " .. Text .. " ")
+end
