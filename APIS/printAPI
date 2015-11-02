@@ -163,7 +163,7 @@ end
 function printLogo(X,Y,title)
  term.setCursorPos(X,Y)
  term.setTextColor(colors.white)
- write("Hotel Manager ")
+ write("Tools ")
  term.setTextColor(colors.lightGray)
  write(title)
 end
